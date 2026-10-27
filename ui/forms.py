@@ -1,3 +1,4 @@
+
 """Professional form interface for student academic prediction."""
 
 import streamlit as st
@@ -27,28 +28,31 @@ def student_prediction_form():
             admission_grade = st.number_input(
                 "Admission Grade",
                 min_value=0,
-                max_value=200,
-                value=120,
+                max_value=100,
+                value=None,
                 step=1,
-                format="%d"
+                format="%d",
+                placeholder="Enter admission grade"
             )
 
             age = st.number_input(
                 "Age at Enrollment",
-                min_value=15,
+                min_value=0,
                 max_value=100,
-                value=20,
+                value=None,
                 step=1,
-                format="%d"
+                format="%d",
+                placeholder="Enter age"
             )
 
             units_enrolled = st.number_input(
                 "First Semester Units Enrolled",
                 min_value=0,
-                max_value=50,
-                value=6,
+                max_value=100,
+                value=None,
                 step=1,
-                format="%d"
+                format="%d",
+                placeholder="Enter units enrolled"
             )
 
         with col2:
@@ -56,28 +60,31 @@ def student_prediction_form():
             units_approved = st.number_input(
                 "First Semester Units Approved",
                 min_value=0,
-                max_value=50,
-                value=4,
+                max_value=100,
+                value=None,
                 step=1,
-                format="%d"
+                format="%d",
+                placeholder="Enter units approved"
             )
 
             semester_grade = st.number_input(
                 "First Semester Average Grade",
                 min_value=0,
-                max_value=20,
-                value=10,
+                max_value=100,
+                value=None,
                 step=1,
-                format="%d"
+                format="%d",
+                placeholder="Enter average grade"
             )
 
             evaluations = st.number_input(
                 "First Semester Evaluations",
                 min_value=0,
-                max_value=50,
-                value=6,
+                max_value=100,
+                value=None,
                 step=1,
-                format="%d"
+                format="%d",
+                placeholder="Enter evaluations"
             )
 
         st.divider()
