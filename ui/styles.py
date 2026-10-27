@@ -214,148 +214,150 @@ def apply_styles():
 
 
         
-        /* ----------------------------------
-        PROFESSIONAL INTERACTIVE BUTTONS
-        ---------------------------------- */
 
-        .stButton > button,
-        .stFormSubmitButton > button,
-        .stDownloadButton > button {
-            min-height: 42px;
-            padding: 0.5rem 1.1rem;
-            border-radius: 8px;
-            font-weight: 600;
-            border: 1px solid #D5DEE9;
-            box-shadow: 0 2px 4px rgba(30, 58, 95, 0.05);
-            transition:
-                background-color 0.2s ease,
-                border-color 0.2s ease,
-                box-shadow 0.2s ease,
-                transform 0.2s ease;
-            user-select: none;
-            -webkit-user-select: none;
-        }
+/* ----------------------------------
+   PROFESSIONAL INTERACTIVE BUTTONS
+---------------------------------- */
 
-        /* Primary action buttons */
+.stButton > button,
+.stFormSubmitButton > button,
+.stDownloadButton > button {
+    min-height: 42px;
+    padding: 0.5rem 1.1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    border: 1px solid #D5DEE9;
+    box-shadow: 0 2px 4px rgba(30, 58, 95, 0.05);
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        transform 0.2s ease;
+    user-select: none;
+    -webkit-user-select: none;
+}
 
-        .stButton > button[kind="primary"],
-        .stFormSubmitButton > button[kind="primary"] {
-            background: #1E3A5F;
-            color: #FFFFFF;
-            border: 1px solid #1E3A5F;
-        }
+/* Primary action buttons */
 
-        /* Elegant hover effect */
+.stButton > button[kind="primary"],
+.stFormSubmitButton > button[kind="primary"] {
+    background: #1E3A5F;
+    color: #FFFFFF;
+    border: 1px solid #1E3A5F;
+}
 
-        .stButton > button:hover,
-        .stFormSubmitButton > button:hover,
-        .stDownloadButton > button:hover {
-            border-color: #7892B0;
-            box-shadow: 0 4px 10px rgba(30, 58, 95, 0.12);
-            transform: translateY(-1px);
-        }
+/* Elegant hover effect */
 
-        /* Primary button hover */
+.stButton > button:hover,
+.stFormSubmitButton > button:hover,
+.stDownloadButton > button:hover {
+    border-color: #7892B0;
+    box-shadow: 0 4px 10px rgba(30, 58, 95, 0.12);
+    transform: translateY(-1px);
+}
 
-        .stButton > button[kind="primary"]:hover,
-        .stFormSubmitButton > button[kind="primary"]:hover {
-            background: #2F527A;
-            border-color: #2F527A;
-            color: #FFFFFF;
-        }
+/* Primary button hover */
 
-        /* Keyboard accessibility */
+.stButton > button[kind="primary"]:hover,
+.stFormSubmitButton > button[kind="primary"]:hover {
+    background: #2F527A;
+    border-color: #2F527A;
+    color: #FFFFFF;
+}
 
-        .stButton > button:focus-visible,
-        .stFormSubmitButton > button:focus-visible,
-        .stDownloadButton > button:focus-visible {
-            outline: 2px solid #7892B0;
-            outline-offset: 3px;
-        }
+/* Keyboard accessibility */
 
-        /* Keep button text non-editable */
+.stButton > button:focus-visible,
+.stFormSubmitButton > button:focus-visible,
+.stDownloadButton > button:focus-visible {
+    outline: 2px solid #7892B0;
+    outline-offset: 3px;
+}
 
-        .stButton > button *,
-        .stFormSubmitButton > button *,
-        .stDownloadButton > button * {
-            user-select: none;
-            -webkit-user-select: none;
-        }
+/* Keep button text non-editable */
 
-        /* ----------------------------------
-        INTERACTIVE DASHBOARD CARDS
-        ---------------------------------- */
+.stButton > button *,
+.stFormSubmitButton > button *,
+.stDownloadButton > button * {
+    user-select: none;
+    -webkit-user-select: none;
+}
 
-        [data-testid="stMetric"] {
-            background: #FFFFFF;
-            border: 1px solid #E1E6ED;
-            border-radius: 10px;
-            padding: 16px;
-            transition:
-                border-color 0.2s ease,
-                box-shadow 0.2s ease,
-                transform 0.2s ease;
-        }
+/* ----------------------------------
+   INTERACTIVE DASHBOARD CARDS
+---------------------------------- */
 
-        [data-testid="stMetric"]:hover {
-            border-color: #B7C7D9;
-            box-shadow: 0 5px 14px rgba(30, 58, 95, 0.07);
-            transform: translateY(-2px);
-        }
+[data-testid="stMetric"] {
+    background: #FFFFFF;
+    border: 1px solid #E1E6ED;
+    border-radius: 10px;
+    padding: 16px;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        transform 0.2s ease;
+}
 
-        /* ----------------------------------
-        INTERACTIVE PANELS
-        ---------------------------------- */
+[data-testid="stMetric"]:hover {
+    border-color: #B7C7D9;
+    box-shadow: 0 5px 14px rgba(30, 58, 95, 0.07);
+    transform: translateY(-2px);
+}
 
-        .mini-panel {
-            background: #FFFFFF;
-            border: 1px solid #E1E6ED;
-            border-radius: 10px;
-            padding: 16px 18px;
-            height: 100%;
-            transition:
-                border-color 0.2s ease,
-                box-shadow 0.2s ease;
-        }
+/* ----------------------------------
+   INTERACTIVE PANELS
+---------------------------------- */
 
-        .mini-panel:hover {
-            border-color: #B7C7D9;
-            box-shadow: 0 4px 12px rgba(30, 58, 95, 0.06);
-        }
+.mini-panel {
+    background: #FFFFFF;
+    border: 1px solid #E1E6ED;
+    border-radius: 10px;
+    padding: 16px 18px;
+    height: 100%;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
 
-        /* ----------------------------------
-        FORM INPUTS
-        ---------------------------------- */
+.mini-panel:hover {
+    border-color: #B7C7D9;
+    box-shadow: 0 4px 12px rgba(30, 58, 95, 0.06);
+}
 
-        .stTextInput input,
-        .stNumberInput input,
-        .stSelectbox [data-baseweb="select"],
-        .stTextArea textarea {
-            border-radius: 7px;
-        }
+/* ----------------------------------
+   FORM INPUTS
+---------------------------------- */
 
-        /* ----------------------------------
-        SIDEBAR NAVIGATION
-        ---------------------------------- */
+.stTextInput input,
+.stNumberInput input,
+.stSelectbox [data-baseweb="select"],
+.stTextArea textarea {
+    border-radius: 7px;
+}
 
-        [data-testid="stSidebar"] [role="radiogroup"] label {
-            border-radius: 7px;
-            transition: background-color 0.2s ease;
-        }
+/* ----------------------------------
+   SIDEBAR NAVIGATION
+---------------------------------- */
 
-        [data-testid="stSidebar"] [role="radiogroup"] label:hover {
-            background-color: rgba(255, 255, 255, 0.12);
-        }
+[data-testid="stSidebar"] [role="radiogroup"] label {
+    border-radius: 7px;
+    transition: background-color 0.2s ease;
+}
 
-        /* ----------------------------------
-        TABLES
-        ---------------------------------- */
+[data-testid="stSidebar"] [role="radiogroup"] label:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+}
 
-        [data-testid="stDataFrame"] {
-            border: 1px solid #E1E6ED;
-            border-radius: 9px;
-            overflow: hidden;
-        }
+/* ----------------------------------
+   TABLES
+---------------------------------- */
+
+[data-testid="stDataFrame"] {
+    border: 1px solid #E1E6ED;
+    border-radius: 9px;
+    overflow: hidden;
+}
+
 
 
         /* ----------------------------------
