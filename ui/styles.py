@@ -213,46 +213,150 @@ def apply_styles():
         }
 
 
+        
         /* ----------------------------------
-           BUTTONS
+        PROFESSIONAL INTERACTIVE BUTTONS
         ---------------------------------- */
-
-        /* BUTTONS — FIXED TEXT AND PROFESSIONAL STYLE */
 
         .stButton > button,
         .stFormSubmitButton > button,
         .stDownloadButton > button {
-            min-height: 40px;
-            border-radius: 6px;
+            min-height: 42px;
+            padding: 0.5rem 1.1rem;
+            border-radius: 8px;
             font-weight: 600;
-            box-shadow: none !important;
-            transition: none !important;
-            user-select: none !important;
-            -webkit-user-select: none !important;
-            cursor: pointer;
+            border: 1px solid #D5DEE9;
+            box-shadow: 0 2px 4px rgba(30, 58, 95, 0.05);
+            transition:
+                background-color 0.2s ease,
+                border-color 0.2s ease,
+                box-shadow 0.2s ease,
+                transform 0.2s ease;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
-        .stButton > button *,
-        .stFormSubmitButton > button *,
-        .stDownloadButton > button * {
-            user-select: none !important;
-            -webkit-user-select: none !important;
-            pointer-events: none;
+        /* Primary action buttons */
+
+        .stButton > button[kind="primary"],
+        .stFormSubmitButton > button[kind="primary"] {
+            background: #1E3A5F;
+            color: #FFFFFF;
+            border: 1px solid #1E3A5F;
         }
 
-        .stButton > button:focus,
-        .stFormSubmitButton > button:focus,
-        .stDownloadButton > button:focus {
-            outline: none !important;
-            box-shadow: none !important;
-        }
+        /* Elegant hover effect */
 
         .stButton > button:hover,
         .stFormSubmitButton > button:hover,
         .stDownloadButton > button:hover {
-            transform: none !important;
-            box-shadow: none !important;
+            border-color: #7892B0;
+            box-shadow: 0 4px 10px rgba(30, 58, 95, 0.12);
+            transform: translateY(-1px);
         }
+
+        /* Primary button hover */
+
+        .stButton > button[kind="primary"]:hover,
+        .stFormSubmitButton > button[kind="primary"]:hover {
+            background: #2F527A;
+            border-color: #2F527A;
+            color: #FFFFFF;
+        }
+
+        /* Keyboard accessibility */
+
+        .stButton > button:focus-visible,
+        .stFormSubmitButton > button:focus-visible,
+        .stDownloadButton > button:focus-visible {
+            outline: 2px solid #7892B0;
+            outline-offset: 3px;
+        }
+
+        /* Keep button text non-editable */
+
+        .stButton > button *,
+        .stFormSubmitButton > button *,
+        .stDownloadButton > button * {
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* ----------------------------------
+        INTERACTIVE DASHBOARD CARDS
+        ---------------------------------- */
+
+        [data-testid="stMetric"] {
+            background: #FFFFFF;
+            border: 1px solid #E1E6ED;
+            border-radius: 10px;
+            padding: 16px;
+            transition:
+                border-color 0.2s ease,
+                box-shadow 0.2s ease,
+                transform 0.2s ease;
+        }
+
+        [data-testid="stMetric"]:hover {
+            border-color: #B7C7D9;
+            box-shadow: 0 5px 14px rgba(30, 58, 95, 0.07);
+            transform: translateY(-2px);
+        }
+
+        /* ----------------------------------
+        INTERACTIVE PANELS
+        ---------------------------------- */
+
+        .mini-panel {
+            background: #FFFFFF;
+            border: 1px solid #E1E6ED;
+            border-radius: 10px;
+            padding: 16px 18px;
+            height: 100%;
+            transition:
+                border-color 0.2s ease,
+                box-shadow 0.2s ease;
+        }
+
+        .mini-panel:hover {
+            border-color: #B7C7D9;
+            box-shadow: 0 4px 12px rgba(30, 58, 95, 0.06);
+        }
+
+        /* ----------------------------------
+        FORM INPUTS
+        ---------------------------------- */
+
+        .stTextInput input,
+        .stNumberInput input,
+        .stSelectbox [data-baseweb="select"],
+        .stTextArea textarea {
+            border-radius: 7px;
+        }
+
+        /* ----------------------------------
+        SIDEBAR NAVIGATION
+        ---------------------------------- */
+
+        [data-testid="stSidebar"] [role="radiogroup"] label {
+            border-radius: 7px;
+            transition: background-color 0.2s ease;
+        }
+
+        [data-testid="stSidebar"] [role="radiogroup"] label:hover {
+            background-color: rgba(255, 255, 255, 0.12);
+        }
+
+        /* ----------------------------------
+        TABLES
+        ---------------------------------- */
+
+        [data-testid="stDataFrame"] {
+            border: 1px solid #E1E6ED;
+            border-radius: 9px;
+            overflow: hidden;
+        }
+
 
         /* ----------------------------------
            PROGRESS BARS
