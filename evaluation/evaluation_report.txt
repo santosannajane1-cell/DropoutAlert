@@ -1,0 +1,24 @@
+DROPOUTALERT MODEL EVALUATION
+============================
+
+Dataset records: 4424
+Training records: 3539
+Testing records: 885
+
+Accuracy: 0.8158
+Recall: 0.7289
+ROC-AUC: 0.8552
+
+CLASSIFICATION REPORT
+              precision    recall  f1-score   support
+
+ Not At Risk       0.87      0.86      0.86       601
+     At Risk       0.71      0.73      0.72       284
+
+    accuracy                           0.82       885
+   macro avg       0.79      0.79      0.79       885
+weighted avg       0.82      0.82      0.82       885
+
+CONFUSION MATRIX
+[[515  86]
+ [ 77 207]]
