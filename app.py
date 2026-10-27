@@ -189,6 +189,8 @@ def format_risk_table(data):
 
     return display
 
+def format_student_id(record_id):
+    return f"DA-2026-{int(record_id):03d}"
 
 # =====================================================
 # NAVIGATION HELPER
