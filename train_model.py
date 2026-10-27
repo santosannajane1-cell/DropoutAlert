@@ -51,9 +51,43 @@ model = RandomForestClassifier(
 
 model.fit(X_train, y_train)
 
+print("\nCLASS DISTRIBUTION AND SPLIT")
+print("Total records:", len(y))
+print("Training records:", len(y_train))
+print("Testing records:", len(y_test))
+
+print("\nFull dataset:")
+print(y.value_counts().sort_index())
+
+print("\nTraining:")
+print(y_train.value_counts().sort_index())
+
+print("\nTesting:")
+print(y_test.value_counts().sort_index())
+
 # 5. Evaluate on unseen test data
 y_pred = model.predict(X_test)
 y_prob = model.predict_proba(X_test)[:, 1]
+
+# DISPLAY 4 ACTUAL TESTING SAMPLES
+print("\nTESTING SAMPLES")
+print("=" * 50, flush=True)
+
+samples = X_test.head(4).copy()
+actual = y_test.loc[samples.index]
+predicted = model.predict(samples)
+
+for i in range(len(samples)):
+    print(f"\nSample {i + 1}", flush=True)
+    print(samples.iloc[i].to_string(), flush=True)
+
+    expected = "At Risk" if actual.iloc[i] == 1 else "Not At Risk"
+    prediction = "At Risk" if predicted[i] == 1 else "Not At Risk"
+    correct = "Yes" if actual.iloc[i] == predicted[i] else "No"
+
+    print(f"Expected: {expected}", flush=True)
+    print(f"Predicted: {prediction}", flush=True)
+    print(f"Correct: {correct}", flush=True)
 
 accuracy = accuracy_score(y_test, y_pred)
 recall = recall_score(y_test, y_pred)
@@ -138,3 +172,30 @@ with open("evaluation/evaluation_report.txt", "w") as file:
 
 print("\nModel saved successfully!")
 print("Evaluation results saved in the evaluation folder.")
+
+# DUPLICATE AND LEAKAGE CHECK
+
+print("\nDUPLICATE AND LEAKAGE CHECK")
+print("---------------------------")
+
+# 1. Check duplicate records in the full dataset
+duplicates = df.duplicated().sum()
+print("Duplicate records:", duplicates)
+
+# 2. Check whether the target column is used as an input feature
+print("Target included in features:", "Target" in features)
+
+# 3. Check for identical feature rows across training and testing
+overlap = X_train.merge(X_test, how="inner").shape[0]
+print("Matching feature rows across train/test:", overlap)
+
+# Check exact full-record overlap between train and test
+train_rows = df.loc[X_train.index]
+test_rows = df.loc[X_test.index]
+
+full_record_overlap = train_rows.merge(
+    test_rows,
+    how="inner"
+).shape[0]
+
+print("Matching full records across train/test:", full_record_overlap)
