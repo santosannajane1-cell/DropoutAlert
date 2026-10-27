@@ -536,6 +536,19 @@ elif page == "Student Records":
         risk_filter=risk_filter
     )
 
+    records = load_predictions(
+    search=search_name,
+    risk_filter=risk_filter
+)
+
+# Display numbering starts at 1 for the current filtered list
+if not records.empty:
+    records.insert(
+        0,
+        "No.",
+        range(1, len(records) + 1)
+    )
+
     st.caption(f"{len(records)} matching record(s)")
 
     if not records.empty:
