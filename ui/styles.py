@@ -217,6 +217,8 @@ def apply_styles():
            BUTTONS
         ---------------------------------- */
 
+        /* BUTTONS — FIXED TEXT AND PROFESSIONAL STYLE */
+
         .stButton > button,
         .stFormSubmitButton > button,
         .stDownloadButton > button {
@@ -225,32 +227,32 @@ def apply_styles():
             font-weight: 600;
             box-shadow: none !important;
             transition: none !important;
+            user-select: none !important;
+            -webkit-user-select: none !important;
+            cursor: pointer;
         }
 
-        /* Primary buttons */
-        .stButton > button[kind="primary"],
-        .stFormSubmitButton > button[kind="primary"] {
-            background-color: var(--primary);
-            color: #FFFFFF;
-            border: 1px solid var(--primary);
+        .stButton > button *,
+        .stFormSubmitButton > button *,
+        .stDownloadButton > button * {
+            user-select: none !important;
+            -webkit-user-select: none !important;
+            pointer-events: none;
         }
 
-        /* Keep buttons visually consistent on hover */
+        .stButton > button:focus,
+        .stFormSubmitButton > button:focus,
+        .stDownloadButton > button:focus {
+            outline: none !important;
+            box-shadow: none !important;
+        }
+
         .stButton > button:hover,
         .stFormSubmitButton > button:hover,
         .stDownloadButton > button:hover {
-            box-shadow: none !important;
             transform: none !important;
-            transition: none !important;
+            box-shadow: none !important;
         }
-
-        .stButton > button[kind="primary"]:hover,
-        .stFormSubmitButton > button[kind="primary"]:hover {
-            background-color: var(--primary);
-            color: #FFFFFF;
-            border-color: var(--primary);
-        }
-
 
         /* ----------------------------------
            PROGRESS BARS
