@@ -9,9 +9,6 @@ import sqlite3
 from datetime import datetime
 from pathlib import Path
 
-# Main application: navigation, data/model logic, and page routing.
-# Shared CSS, layout components, and form widgets live in the ui/ folder.
-
 # =====================================================
 # PAGE CONFIGURATION
 # =====================================================
@@ -30,23 +27,29 @@ DB_PATH = BASE_DIR / "dropoutalert.db"
 NAVY = "#003049"
 STEEL_BLUE = "#669BBC"
 CRIMSON = "#C1121F"
-BURGUNDY = "#780000"
-CREAM = "#FDF0D5"
-WHITE = "#FFFFFF"
-BORDER = "#D9E0E5"
-TEXT = "#263746"
-MUTED = "#617180"
-
-# =====================================================
-# FORMAL ACADEMIC THEME
-# =====================================================
-
-
-# =====================================================
-# PROFESSIONAL DASHBOARD THEME
-# =====================================================
 
 apply_styles()
+
+
+# =====================================================
+# STUDENT ID HELPER
+# =====================================================
+
+def format_student_id(record_id, prediction_date=None):
+    """Create a readable ID without changing the database ID."""
+    year = datetime.now().year
+
+    if prediction_date:
+        try:
+            year = datetime.strptime(
+                str(prediction_date),
+                "%Y-%m-%d %H:%M:%S"
+            ).year
+        except (ValueError, TypeError):
+            pass
+
+    return f"DA-{year}-{int(record_id):03d}"
+
 
 # =====================================================
 # LOAD TRAINED MODEL
@@ -97,9 +100,15 @@ def save_prediction(record):
     with get_connection() as conn:
         cursor = conn.execute("""
             INSERT INTO predictions (
-                prediction_date, student_name, admission_grade,
-                age, units_enrolled, units_approved,
-                semester_grade, evaluations, prediction,
+                prediction_date,
+                student_name,
+                admission_grade,
+                age,
+                units_enrolled,
+                units_approved,
+                semester_grade,
+                evaluations,
+                prediction,
                 risk_percentage
             )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -153,10 +162,17 @@ def load_record(record_id):
     with get_connection() as conn:
         cursor = conn.execute("""
             SELECT
-                id, prediction_date, student_name,
-                admission_grade, age, units_enrolled,
-                units_approved, semester_grade, evaluations,
-                prediction, risk_percentage
+                id,
+                prediction_date,
+                student_name,
+                admission_grade,
+                age,
+                units_enrolled,
+                units_approved,
+                semester_grade,
+                evaluations,
+                prediction,
+                risk_percentage
             FROM predictions
             WHERE id = ?
         """, (record_id,))
@@ -189,16 +205,26 @@ def format_risk_table(data):
 
     return display
 
-def format_student_id(record_id):
-    return f"DA-2026-{int(record_id):03d}"
 
-# =====================================================
-# NAVIGATION HELPER
-# =====================================================
+def add_student_ids(data):
+    """Add formatted student IDs to a copy of the records."""
+    display = data.copy()
+
+    if not display.empty:
+        display["Student ID"] = display.apply(
+            lambda row: format_student_id(
+                row["Record ID"],
+                row["Date & Time"]
+            ),
+            axis=1
+        )
+
+    return display
+
 
 def navigate_to(page_name):
-    """Navigate to another page using the sidebar radio widget."""
     st.session_state["page_navigation"] = page_name
+
 
 # =====================================================
 # SIDEBAR NAVIGATION
@@ -228,7 +254,6 @@ with st.sidebar:
     )
 
     st.divider()
-
     st.caption("Academic Research Prototype")
 
 
@@ -244,7 +269,9 @@ if total_predictions:
         (all_records["Prediction"] == "At Risk").sum()
     )
     not_at_risk_count = total_predictions - at_risk_count
-    average_risk = float(all_records["Risk Percentage"].mean())
+    average_risk = float(
+        all_records["Risk Percentage"].mean()
+    )
 else:
     at_risk_count = 0
     not_at_risk_count = 0
@@ -257,57 +284,89 @@ else:
 
 if page == "Dashboard":
 
-    # Welcome panel inspired by the reference dashboard image
     welcome_left, welcome_right = st.columns([5, 1])
+
     with welcome_left:
         st.markdown(
-            f"""
+            """
             <div class="welcome-banner">
                 <div style="color:#64748B;font-size:.85rem;font-weight:600;">
-                    GOOD MORNING 👋
+                    STUDENT MONITORING
                 </div>
                 <div class="welcome-title">Welcome to DropoutAlert!</div>
                 <div class="welcome-subtitle">
-                    Monitor student predictions and identify learners who may need support.
+                    Monitor student predictions and identify learners
+                    who may need academic support.
                 </div>
             </div>
             """,
             unsafe_allow_html=True
         )
-        
+
     with welcome_right:
         st.markdown(
             '<div class="welcome-banner welcome-icon">🎓📘</div>',
             unsafe_allow_html=True
         )
 
-    # KPI cards
+    # Summary cards
     metric_cols = st.columns(4)
-    metric_cols[0].metric("Total Predictions", total_predictions, "Saved records")
-    metric_cols[1].metric("Students At Risk", at_risk_count, "Review recommended")
-    metric_cols[2].metric("Not At Risk", not_at_risk_count, "No risk flag")
-    metric_cols[3].metric("Average Risk", f"{average_risk:.1f}%", "Across saved records")
+
+    metric_cols[0].metric(
+        "Total Predictions",
+        total_predictions
+    )
+    metric_cols[1].metric(
+        "Students At Risk",
+        at_risk_count
+    )
+    metric_cols[2].metric(
+        "Not At Risk",
+        not_at_risk_count
+    )
+    metric_cols[3].metric(
+        "Average Risk",
+        f"{average_risk:.1f}%"
+    )
 
     st.write("")
 
-    # Main dashboard row: recent results and notice board
+    # Recent predictions and notice board
     recent_col, notice_col = st.columns([1.25, 1])
 
     with recent_col:
-        st.markdown('<div class="mini-panel">', unsafe_allow_html=True)
-        head_col, link_col = st.columns([3, 1])
-        with head_col:
-            st.subheader("Recent Predictions")
-        with link_col:
-            st.caption("Latest records")
+        st.markdown(
+            '<div class="mini-panel">',
+            unsafe_allow_html=True
+        )
+
+        st.subheader("Recent Predictions")
+
         if total_predictions:
-            recent = all_records.head(6)
-            recent_view = recent[
-                ["Student Name", "Prediction", "Risk Percentage", "Date & Time"]
-            ].copy()
-            recent_view["Risk Percentage"] = recent_view["Risk Percentage"].map(
-                lambda value: f"{value:.1f}%"
+            recent = all_records.head(6).copy()
+            recent["Student ID"] = recent.apply(
+                lambda row: format_student_id(
+                    row["Record ID"],
+                    row["Date & Time"]
+                ),
+                axis=1
             )
+
+            recent_view = recent[
+                [
+                    "Student ID",
+                    "Student Name",
+                    "Prediction",
+                    "Risk Percentage"
+                ]
+            ].copy()
+
+            recent_view["Risk Percentage"] = (
+                recent_view["Risk Percentage"].map(
+                    lambda value: f"{value:.1f}%"
+                )
+            )
+
             st.dataframe(
                 recent_view,
                 use_container_width=True,
@@ -315,42 +374,80 @@ if page == "Dashboard":
                 height=245
             )
         else:
-            st.info("No prediction records yet. Create a new prediction to see results here.")
-        st.markdown('</div>', unsafe_allow_html=True)
+            st.info(
+                "No prediction records yet. "
+                "Create a new prediction to see results here."
+            )
+
+        st.markdown(
+            "</div>",
+            unsafe_allow_html=True
+        )
 
     with notice_col:
-        st.markdown('<div class="mini-panel">', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="mini-panel">',
+            unsafe_allow_html=True
+        )
+
         st.subheader("Notice Board")
+
         notices = [
-            ("📢", "Academic review reminder",
-             "Students marked At Risk should be reviewed with their academic context."),
-            ("📊", "Prediction overview",
-             "The dashboard summarizes saved model estimates, not final decisions."),
-            ("🛡️", "Use results responsibly",
-             "Combine model output with adviser judgment and additional evidence.")
+            (
+                "📢",
+                "Academic review reminder",
+                "Students marked At Risk should be reviewed "
+                "with their academic context."
+            ),
+            (
+                "📊",
+                "Prediction overview",
+                "The dashboard summarizes model estimates, "
+                "not final decisions."
+            ),
+            (
+                "🛡️",
+                "Use results responsibly",
+                "Combine model output with adviser judgment "
+                "and additional evidence."
+            )
         ]
+
         for icon, title, copy in notices:
             st.markdown(
-                f'<div class="notice-item"><div class="notice-icon">{icon}</div>'
+                f'<div class="notice-item">'
+                f'<div class="notice-icon">{icon}</div>'
                 f'<div><div class="notice-title">{title}</div>'
                 f'<div class="notice-copy">{copy}</div></div></div>',
                 unsafe_allow_html=True
             )
-        st.markdown('</div>', unsafe_allow_html=True)
+
+        st.markdown(
+            "</div>",
+            unsafe_allow_html=True
+        )
 
     st.write("")
 
-    # Lower dashboard row
-    analysis_col, quick_col, performance_col = st.columns([1, 1, 1.15])
+    # Lower dashboard section
+    analysis_col, quick_col, performance_col = st.columns(
+        [1, 1, 1.15]
+    )
 
     with analysis_col:
-        st.markdown('<div class="mini-panel">', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="mini-panel">',
+            unsafe_allow_html=True
+        )
+
         st.subheader("Prediction Distribution")
+
         if total_predictions:
             chart_data = pd.DataFrame({
                 "Status": ["At Risk", "Not At Risk"],
                 "Records": [at_risk_count, not_at_risk_count]
             })
+
             st.bar_chart(
                 chart_data,
                 x="Status",
@@ -360,45 +457,72 @@ if page == "Dashboard":
             )
         else:
             st.info("Create a prediction to populate this chart.")
-        st.markdown('</div>', unsafe_allow_html=True)
+
+        st.markdown(
+            "</div>",
+            unsafe_allow_html=True
+        )
 
     with quick_col:
-        st.markdown('<div class="mini-panel">', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="mini-panel">',
+            unsafe_allow_html=True
+        )
+
         st.subheader("Quick Access")
         st.caption("Go directly to a common task")
-        if st.button(
-            "➕  New Prediction",
+
+        st.button(
+            "➕ New Prediction",
             use_container_width=True,
             on_click=navigate_to,
             args=("New Prediction",)
-        ):
-            pass
-        if st.button(
-            "📋  Student Records",
+        )
+
+        st.button(
+            "📋 Student Records",
             use_container_width=True,
             on_click=navigate_to,
             args=("Student Records",)
-        ):
-            pass
-        if st.button(
-            "📈  Risk Analysis",
+        )
+
+        st.button(
+            "📈 Risk Analysis",
             use_container_width=True,
             on_click=navigate_to,
             args=("Risk Analysis",)
-        ):
-            pass
-        st.markdown('</div>', unsafe_allow_html=True)
+        )
+
+        st.markdown(
+            "</div>",
+            unsafe_allow_html=True
+        )
 
     with performance_col:
-        st.markdown('<div class="mini-panel">', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="mini-panel">',
+            unsafe_allow_html=True
+        )
+
         st.subheader("Risk Overview")
-        st.metric("Average Estimated Risk", f"{average_risk:.2f}%")
-        st.progress(max(0.0, min(1.0, average_risk / 100)))
+        st.metric(
+            "Average Estimated Risk",
+            f"{average_risk:.2f}%"
+        )
+
+        st.progress(
+            max(0.0, min(1.0, average_risk / 100))
+        )
+
         st.caption(
             "Average estimated probability across saved predictions. "
             "This is a screening aid, not a standalone decision."
         )
-        st.markdown('</div>', unsafe_allow_html=True)
+
+        st.markdown(
+            "</div>",
+            unsafe_allow_html=True
+        )
 
     show_footer()
 
@@ -415,6 +539,7 @@ elif page == "New Prediction":
     )
 
     form_values = student_prediction_form()
+
     submitted = form_values["submitted"]
     student_name = form_values["student_name"]
     admission_grade = form_values["admission_grade"]
@@ -451,6 +576,7 @@ elif page == "New Prediction":
                 probabilities = model.predict_proba(input_data)[0]
 
                 class_index = list(model.classes_).index(1)
+
                 risk_percentage = (
                     float(probabilities[class_index]) * 100
                 )
@@ -472,33 +598,49 @@ elif page == "New Prediction":
                     "Semester Average": semester_grade,
                     "Evaluations": evaluations,
                     "Prediction": status,
-                    "Risk Percentage": round(risk_percentage, 2)
+                    "Risk Percentage": round(
+                        risk_percentage, 2
+                    )
                 }
 
                 record_id = save_prediction(record)
+
                 record["Record ID"] = record_id
+                record["Student ID"] = format_student_id(
+                    record_id,
+                    record["Date & Time"]
+                )
 
                 st.session_state["latest_prediction"] = record
 
-                st.success("Prediction completed and saved.")
+                st.success(
+                    f"Prediction saved successfully. "
+                    f"Student ID: {record['Student ID']}"
+                )
 
             except (ValueError, KeyError):
                 st.error(
                     "The prediction could not be completed. "
-                    "Check the model's expected feature names and "
-                    "class labels."
+                    "Check the model's expected feature names "
+                    "and class labels."
                 )
 
-            except Exception:
+            except Exception as error:
                 st.error(
                     "An unexpected error occurred while generating "
                     "the prediction. Check the terminal for details."
                 )
+                print(f"Prediction error: {error}")
 
     latest = st.session_state.get("latest_prediction")
 
     if latest:
         st.divider()
+
+        st.markdown(
+            f"**Student ID:** {latest.get('Student ID', format_student_id(latest['Record ID'], latest['Date & Time']))}"
+        )
+
         show_risk_result(latest)
 
     show_footer()
@@ -538,32 +680,36 @@ elif page == "Student Records":
         risk_filter=risk_filter
     )
 
-    records = load_predictions(
-    search=search_name,
-    risk_filter=risk_filter
-)
-
-# Display numbering starts at 1 for the current filtered list
-if not records.empty:
-    records.insert(
-        0,
-        "No.",
-        range(1, len(records) + 1)
-    )
-
     st.caption(f"{len(records)} matching record(s)")
 
     if not records.empty:
 
+        # Create a display-only copy. Database IDs remain unchanged.
+        display_records = add_student_ids(records)
+
+        # Number the currently displayed rows from 1.
+        display_records.insert(
+            0,
+            "No.",
+            range(1, len(display_records) + 1)
+        )
+
+        # Hide the internal database ID from the visible table.
+        display_table = display_records.drop(
+            columns=["Record ID"]
+        )
+
         st.dataframe(
-            format_risk_table(records),
+            format_risk_table(display_table),
             use_container_width=True,
             hide_index=True
         )
 
         st.download_button(
             "Export CSV",
-            data=records.to_csv(index=False).encode("utf-8"),
+            data=display_table.to_csv(
+                index=False
+            ).encode("utf-8"),
             file_name="dropoutalert_student_records.csv",
             mime="text/csv"
         )
@@ -571,14 +717,15 @@ if not records.empty:
         st.divider()
         st.subheader("Record Details")
 
+        # Use the real database ID for lookups and deletion.
         record_ids = records["Record ID"].astype(int).tolist()
 
         selected_id = st.selectbox(
-            "Select Record",
+            "Select Student",
             record_ids,
             format_func=lambda rid: (
-                f"Record #{rid} — "
-                f"{records.loc[records['Record ID'] == rid, 'Student Name'].iloc[0]}"
+                f"{format_student_id(rid, records.loc[records['Record ID'] == rid, 'Date & Time'].iloc[0])}"
+                f" — {records.loc[records['Record ID'] == rid, 'Student Name'].iloc[0]}"
             )
         )
 
@@ -586,16 +733,28 @@ if not records.empty:
 
         if selected:
             (
-                rid, date, name, admission, record_age,
-                enrolled, approved, grade, evaluations,
-                status, risk
+                rid,
+                date,
+                name,
+                admission,
+                record_age,
+                enrolled,
+                approved,
+                grade,
+                evaluations,
+                status,
+                risk
             ) = selected
+
+            student_id = format_student_id(rid, date)
 
             with st.container(border=True):
                 st.subheader(name)
+                st.caption(f"Student ID: {student_id}")
 
                 col1, col2, col3 = st.columns(3)
-                col1.metric("Record ID", rid)
+
+                col1.metric("Student ID", student_id)
                 col2.metric("Prediction", status)
                 col3.metric("Estimated Risk", f"{risk:.2f}%")
 
@@ -621,7 +780,7 @@ if not records.empty:
             )
 
             confirm_delete = st.checkbox(
-                f"Confirm deletion of Record #{rid}",
+                f"Confirm deletion of {student_id}",
                 key=f"delete_confirm_{rid}"
             )
 
@@ -635,9 +794,12 @@ if not records.empty:
                 latest = st.session_state.get("latest_prediction")
 
                 if latest and latest.get("Record ID") == rid:
-                    st.session_state.pop("latest_prediction", None)
+                    st.session_state.pop(
+                        "latest_prediction",
+                        None
+                    )
 
-                st.success("Record deleted.")
+                st.success(f"{student_id} has been deleted.")
                 st.rerun()
 
     else:
@@ -684,7 +846,9 @@ elif page == "Risk Analysis":
         with right:
             st.subheader("Estimated Risk Ranges")
 
-            risk_data = all_records["Risk Percentage"].clip(0, 100)
+            risk_data = all_records[
+                "Risk Percentage"
+            ].clip(0, 100)
 
             risk_bins = pd.cut(
                 risk_data,
@@ -729,7 +893,9 @@ elif page == "Risk Analysis":
 
         col3.metric(
             "Records with Risk ≥ 70%",
-            int((all_records["Risk Percentage"] >= 70).sum())
+            int(
+                (all_records["Risk Percentage"] >= 70).sum()
+            )
         )
 
         st.caption(
@@ -743,20 +909,24 @@ elif page == "Risk Analysis":
 
         flagged_records = all_records[
             all_records["Prediction"] == "At Risk"
-        ][
-            [
-                "Record ID",
-                "Student Name",
-                "Semester Average",
-                "Units Enrolled",
-                "Units Approved",
-                "Risk Percentage"
-            ]
-        ]
+        ].copy()
 
         if not flagged_records.empty:
+            flagged_records = add_student_ids(flagged_records)
+
+            flagged_view = flagged_records[
+                [
+                    "Student ID",
+                    "Student Name",
+                    "Semester Average",
+                    "Units Enrolled",
+                    "Units Approved",
+                    "Risk Percentage"
+                ]
+            ]
+
             st.dataframe(
-                format_risk_table(flagged_records),
+                format_risk_table(flagged_view),
                 use_container_width=True,
                 hide_index=True
             )
@@ -767,6 +937,8 @@ elif page == "Risk Analysis":
             )
 
         else:
-            st.success("No records are currently flagged as At Risk.")
+            st.success(
+                "No records are currently flagged as At Risk."
+            )
 
     show_footer()
