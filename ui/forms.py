@@ -25,8 +25,8 @@ def student_prediction_form():
         with col1:
             admission_grade = st.number_input(
                 "Admission Grade",
-                min_value=0,
-                max_value=100,
+                min_value=95.0,
+                max_value=190.0,
                 value=None,
                 step=0.1,
                 format="%.1f",
@@ -67,7 +67,7 @@ def student_prediction_form():
             semester_grade = st.number_input(
                 "First Semester Average Grade",
                 min_value=0.0,
-                max_value=100,
+                max_value=18.88,
                 value=None,
                 step=0.01,
                 format="%.2f",
