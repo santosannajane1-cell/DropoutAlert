@@ -36,7 +36,6 @@ apply_styles()
 # =====================================================
 
 def format_student_id(record_id, prediction_date=None):
-    """Create a readable ID without changing the database ID."""
     year = datetime.now().year
 
     if prediction_date:
@@ -97,17 +96,20 @@ def initialize_database():
             )
         """)
 
-        # Add the attendance columns to existing databases, if needed.
         existing_columns = {
             row[1] for row in conn.execute("PRAGMA table_info(predictions)")
         }
+
         if "attendance_rate" not in existing_columns:
             conn.execute(
-                "ALTER TABLE predictions ADD COLUMN attendance_rate REAL NOT NULL DEFAULT 100"
+                "ALTER TABLE predictions ADD COLUMN attendance_rate "
+                "REAL NOT NULL DEFAULT 100"
             )
+
         if "absences" not in existing_columns:
             conn.execute(
-                "ALTER TABLE predictions ADD COLUMN absences INTEGER NOT NULL DEFAULT 0"
+                "ALTER TABLE predictions ADD COLUMN absences "
+                "INTEGER NOT NULL DEFAULT 0"
             )
 
 
@@ -230,7 +232,6 @@ def format_risk_table(data):
 
 
 def add_student_ids(data):
-    """Add formatted student IDs to a copy of the records."""
     display = data.copy()
 
     if not display.empty:
@@ -332,29 +333,15 @@ if page == "Dashboard":
             unsafe_allow_html=True
         )
 
-    # Summary cards
     metric_cols = st.columns(4)
 
-    metric_cols[0].metric(
-        "Total Predictions",
-        total_predictions
-    )
-    metric_cols[1].metric(
-        "Students At Risk",
-        at_risk_count
-    )
-    metric_cols[2].metric(
-        "Not At Risk",
-        not_at_risk_count
-    )
-    metric_cols[3].metric(
-        "Average Risk",
-        f"{average_risk:.1f}%"
-    )
+    metric_cols[0].metric("Total Predictions", total_predictions)
+    metric_cols[1].metric("Students At Risk", at_risk_count)
+    metric_cols[2].metric("Not At Risk", not_at_risk_count)
+    metric_cols[3].metric("Average Risk", f"{average_risk:.1f}%")
 
     st.write("")
 
-    # Recent predictions and notice board
     recent_col, notice_col = st.columns([1.25, 1])
 
     with recent_col:
@@ -367,6 +354,7 @@ if page == "Dashboard":
 
         if total_predictions:
             recent = all_records.head(6).copy()
+
             recent["Student ID"] = recent.apply(
                 lambda row: format_student_id(
                     row["Record ID"],
@@ -402,10 +390,7 @@ if page == "Dashboard":
                 "Create a new prediction to see results here."
             )
 
-        st.markdown(
-            "</div>",
-            unsafe_allow_html=True
-        )
+        st.markdown("</div>", unsafe_allow_html=True)
 
     with notice_col:
         st.markdown(
@@ -445,14 +430,10 @@ if page == "Dashboard":
                 unsafe_allow_html=True
             )
 
-        st.markdown(
-            "</div>",
-            unsafe_allow_html=True
-        )
+        st.markdown("</div>", unsafe_allow_html=True)
 
     st.write("")
 
-    # Lower dashboard section
     analysis_col, quick_col, performance_col = st.columns(
         [1, 1, 1.15]
     )
@@ -481,10 +462,7 @@ if page == "Dashboard":
         else:
             st.info("Create a prediction to populate this chart.")
 
-        st.markdown(
-            "</div>",
-            unsafe_allow_html=True
-        )
+        st.markdown("</div>", unsafe_allow_html=True)
 
     with quick_col:
         st.markdown(
@@ -516,10 +494,7 @@ if page == "Dashboard":
             args=("Risk Analysis",)
         )
 
-        st.markdown(
-            "</div>",
-            unsafe_allow_html=True
-        )
+        st.markdown("</div>", unsafe_allow_html=True)
 
     with performance_col:
         st.markdown(
@@ -528,6 +503,7 @@ if page == "Dashboard":
         )
 
         st.subheader("Risk Overview")
+
         st.metric(
             "Average Estimated Risk",
             f"{average_risk:.2f}%"
@@ -542,10 +518,7 @@ if page == "Dashboard":
             "This is a screening aid, not a standalone decision."
         )
 
-        st.markdown(
-            "</div>",
-            unsafe_allow_html=True
-        )
+        st.markdown("</div>", unsafe_allow_html=True)
 
     show_footer()
 
@@ -561,14 +534,19 @@ elif page == "New Prediction":
         "Enter the student's information to estimate dropout risk."
     )
 
+    # Student and academic information form
     form_values = student_prediction_form()
 
+    # Attendance form is placed before the prediction button.
     st.markdown("### Attendance Information")
+
     st.caption(
-        "For counselor reference only. Attendance is saved with the student record "
-        "and does not affect the machine-learning prediction."
+        "For counselor reference only. Attendance is saved with "
+        "the student record and does not affect the machine-learning prediction."
     )
+
     attendance_col1, attendance_col2 = st.columns(2)
+
     with attendance_col1:
         attendance_rate = st.number_input(
             "Attendance Rate (%)",
@@ -578,6 +556,7 @@ elif page == "New Prediction":
             step=1.0,
             help="Enter the student's attendance percentage from 0 to 100."
         )
+
     with attendance_col2:
         absences = st.number_input(
             "Number of Absences",
@@ -588,7 +567,11 @@ elif page == "New Prediction":
             help="Enter the total number of absences."
         )
 
+    # Generate Prediction button
+    st.divider()
+
     submitted = form_values["submitted"]
+
     student_name = form_values["student_name"]
     admission_grade = form_values["admission_grade"]
     age = form_values["age"]
@@ -598,6 +581,7 @@ elif page == "New Prediction":
     evaluations = form_values["evaluations"]
 
     if submitted:
+
         if not student_name.strip():
             st.error("Enter the student's name.")
 
@@ -734,17 +718,14 @@ elif page == "Student Records":
 
     if not records.empty:
 
-        # Create a display-only copy. Database IDs remain unchanged.
         display_records = add_student_ids(records)
 
-        # Number the currently displayed rows from 1.
         display_records.insert(
             0,
             "No.",
             range(1, len(display_records) + 1)
         )
 
-        # Hide the internal database ID from the visible table.
         display_table = display_records.drop(
             columns=["Record ID"]
         )
@@ -767,7 +748,6 @@ elif page == "Student Records":
         st.divider()
         st.subheader("Record Details")
 
-        # Use the real database ID for lookups and deletion.
         record_ids = records["Record ID"].astype(int).tolist()
 
         selected_id = st.selectbox(
