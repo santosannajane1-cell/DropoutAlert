@@ -30,7 +30,7 @@ def student_prediction_form():
                 value=None,
                 step=0.1,
                 format="%.1f",
-                placeholder="95–190"
+                placeholder="0-100"
             )
 
             age = st.number_input(
