@@ -425,6 +425,33 @@ def apply_styles():
            PREDICTION RESULT PANELS
         ---------------------------------- */
 
+        /* Generate Prediction Button */
+div.stButton > button {
+    background-color: #2563EB !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    border-radius: 10px !important;
+    padding: 14px 20px !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    width: 100% !important;
+    transition: all 0.2s ease-in-out !important;
+}
+
+/* Button Hover Effect */
+div.stButton > button:hover {
+    background-color: #1D4ED8 !important;
+    color: #FFFFFF !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
+}
+
+/* Button Focus */
+div.stButton > button:focus {
+    outline: 2px solid #93C5FD !important;
+    outline-offset: 2px !important;
+}
+
         .result-panel {
             padding: 16px 19px;
             border-radius: 8px;
