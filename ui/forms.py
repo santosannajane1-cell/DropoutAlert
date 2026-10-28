@@ -24,13 +24,13 @@ def student_prediction_form():
 
         with col1:
             admission_grade = st.number_input(
-                "Admission Grade",
-                min_value=95.0,
-                max_value=190.0,
+                "Admission Grade (0–100)",
+                min_value=0.0,
+                max_value=100.0,
                 value=None,
-                step=0.1,
-                format="%.1f",
-                placeholder="0-100"
+                step=1.0,
+                format="%.0f",
+                placeholder="Enter admission grade"
             )
 
             age = st.number_input(
@@ -65,13 +65,13 @@ def student_prediction_form():
             )
 
             semester_grade = st.number_input(
-                "First Semester Average Grade",
+                "First Semester Average Grade (0–100)",
                 min_value=0.0,
-                max_value=18.88,
+                max_value=100.0,
                 value=None,
-                step=0.01,
-                format="%.2f",
-                placeholder="0–18.88"
+                step=1.0,
+                format="%.0f",
+                placeholder="Enter average grade"
             )
 
             evaluations = st.number_input(
@@ -87,9 +87,9 @@ def student_prediction_form():
         st.divider()
 
         st.caption(
-            "Enter values using the dataset's grading scale. "
-            "All predictions are estimates intended to support "
-            "academic review, not replace adviser judgment."
+            "Enter academic grades using the 0–100 scale. "
+            "Predictions are estimates intended to support academic "
+            "review, not replace adviser judgment."
         )
 
         submitted = st.form_submit_button(
