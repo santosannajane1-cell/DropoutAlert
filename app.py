@@ -523,6 +523,7 @@ if page == "Dashboard":
     show_footer()
 
 
+
 # =====================================================
 # PAGE 2: NEW PREDICTION
 # =====================================================
@@ -534,41 +535,13 @@ elif page == "New Prediction":
         "Enter the student's information to estimate dropout risk."
     )
 
-    # Student and academic information form
+    # --------------------------------------------------
+    # STUDENT, ACADEMIC, AND ATTENDANCE INFORMATION
+    # --------------------------------------------------
+
     form_values = student_prediction_form()
 
-    # Attendance form is placed before the prediction button.
-    st.markdown("### Attendance Information")
-
-    st.caption(
-        "For counselor reference only. Attendance is saved with "
-        "the student record and does not affect the machine-learning prediction."
-    )
-
-    attendance_col1, attendance_col2 = st.columns(2)
-
-    with attendance_col1:
-        attendance_rate = st.number_input(
-            "Attendance Rate (%)",
-            min_value=0.0,
-            max_value=100.0,
-            value=100.0,
-            step=1.0,
-            help="Enter the student's attendance percentage from 0 to 100."
-        )
-
-    with attendance_col2:
-        absences = st.number_input(
-            "Number of Absences",
-            min_value=0,
-            max_value=365,
-            value=0,
-            step=1,
-            help="Enter the total number of absences."
-        )
-
-    # Generate Prediction button
-    st.divider()
+    # Retrieve submitted values
 
     submitted = form_values["submitted"]
 
@@ -580,17 +553,40 @@ elif page == "New Prediction":
     semester_grade = form_values["semester_grade"]
     evaluations = form_values["evaluations"]
 
+    attendance_rate = form_values["attendance_rate"]
+    absences = form_values["absences"]
+
+    # --------------------------------------------------
+    # GENERATE PREDICTION
+    # --------------------------------------------------
+
     if submitted:
 
         if not student_name.strip():
+
             st.error("Enter the student's name.")
 
+        elif (
+            admission_grade is None
+            or age is None
+            or units_enrolled is None
+            or units_approved is None
+            or semester_grade is None
+            or evaluations is None
+        ):
+
+            st.error(
+                "Please complete all student and academic information."
+            )
+
         elif units_approved > units_enrolled:
+
             st.error(
                 "Approved units cannot exceed enrolled units."
             )
 
         else:
+
             input_data = pd.DataFrame(
                 [[
                     admission_grade,
@@ -604,7 +600,13 @@ elif page == "New Prediction":
             )
 
             try:
+
+                # ------------------------------------------
+                # MACHINE LEARNING PREDICTION
+                # ------------------------------------------
+
                 prediction = model.predict(input_data)[0]
+
                 probabilities = model.predict_proba(input_data)[0]
 
                 class_index = list(model.classes_).index(1)
@@ -614,24 +616,40 @@ elif page == "New Prediction":
                 )
 
                 status = (
-                    "At Risk" if prediction == 1
+                    "At Risk"
+                    if prediction == 1
                     else "Not At Risk"
                 )
+
+                # ------------------------------------------
+                # SAVE STUDENT RECORD
+                # ------------------------------------------
 
                 record = {
                     "Date & Time": datetime.now().strftime(
                         "%Y-%m-%d %H:%M:%S"
                     ),
+
                     "Student Name": student_name.strip(),
+
                     "Admission Grade": admission_grade,
+
                     "Age": age,
+
                     "Units Enrolled": units_enrolled,
+
                     "Units Approved": units_approved,
+
                     "Semester Average": semester_grade,
+
                     "Evaluations": evaluations,
+
                     "Attendance Rate": attendance_rate,
-                    "Absences": int(absences),
+
+                    "Absences": absences,
+
                     "Prediction": status,
+
                     "Risk Percentage": round(
                         risk_percentage, 2
                     )
@@ -640,6 +658,7 @@ elif page == "New Prediction":
                 record_id = save_prediction(record)
 
                 record["Record ID"] = record_id
+
                 record["Student ID"] = format_student_id(
                     record_id,
                     record["Date & Time"]
@@ -653,6 +672,7 @@ elif page == "New Prediction":
                 )
 
             except (ValueError, KeyError):
+
                 st.error(
                     "The prediction could not be completed. "
                     "Check the model's expected feature names "
@@ -660,19 +680,27 @@ elif page == "New Prediction":
                 )
 
             except Exception as error:
+
                 st.error(
                     "An unexpected error occurred while generating "
                     "the prediction. Check the terminal for details."
                 )
+
                 print(f"Prediction error: {error}")
+
+    # --------------------------------------------------
+    # DISPLAY LATEST PREDICTION
+    # --------------------------------------------------
 
     latest = st.session_state.get("latest_prediction")
 
     if latest:
+
         st.divider()
 
         st.markdown(
-            f"**Student ID:** {latest.get('Student ID', format_student_id(latest['Record ID'], latest['Date & Time']))}"
+            f"**Student ID:** "
+            f"{latest.get('Student ID', format_student_id(latest['Record ID'], latest['Date & Time']))}"
         )
 
         show_risk_result(latest)
