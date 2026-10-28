@@ -213,6 +213,40 @@ def delete_record(record_id):
         )
 
 
+def update_record(record_id, record):
+    """Update an existing prediction record without creating a duplicate."""
+    with get_connection() as conn:
+        conn.execute("""
+            UPDATE predictions
+            SET
+                student_name = ?,
+                admission_grade = ?,
+                age = ?,
+                units_enrolled = ?,
+                units_approved = ?,
+                semester_grade = ?,
+                evaluations = ?,
+                attendance_rate = ?,
+                absences = ?,
+                prediction = ?,
+                risk_percentage = ?
+            WHERE id = ?
+        """, (
+            record["Student Name"],
+            record["Admission Grade"],
+            record["Age"],
+            record["Units Enrolled"],
+            record["Units Approved"],
+            record["Semester Average"],
+            record["Evaluations"],
+            record["Attendance Rate"],
+            record["Absences"],
+            record["Prediction"],
+            record["Risk Percentage"],
+            record_id
+        ))
+
+
 initialize_database()
 
 
@@ -808,12 +842,14 @@ elif page == "Student Records":
 
             student_id = format_student_id(rid, date)
 
+            # ------------------------------------------
+            # RECORD DETAILS
+            # ------------------------------------------
             with st.container(border=True):
                 st.subheader(name)
                 st.caption(f"Student ID: {student_id}")
 
                 col1, col2, col3 = st.columns(3)
-
                 col1.metric("Student ID", student_id)
                 col2.metric("Prediction", status)
                 col3.metric("Estimated Risk", f"{risk:.2f}%")
@@ -834,9 +870,191 @@ elif page == "Student Records":
                     st.write(f"**Attendance Rate:** {attendance_rate:g}%")
                     st.write(f"**Number of Absences:** {absences}")
 
+            # ------------------------------------------
+            # EDIT / UPDATE RECORD
+            # ------------------------------------------
+            st.divider()
+            st.subheader("Edit Record")
+
+            edit_key = f"edit_record_{rid}"
+            if edit_key not in st.session_state:
+                st.session_state[edit_key] = False
+
+            if not st.session_state[edit_key]:
+                if st.button(
+                    "✏️ Edit Selected Record",
+                    use_container_width=True,
+                    key=f"edit_button_{rid}"
+                ):
+                    st.session_state[edit_key] = True
+                    st.rerun()
+            else:
+                with st.form(key=f"edit_form_{rid}"):
+                    st.caption(
+                        "Edit the student's information. Saving will update "
+                        "this record and recalculate its prediction."
+                    )
+
+                    edited_name = st.text_input(
+                        "Student Name", value=name
+                    )
+
+                    edit_col1, edit_col2 = st.columns(2)
+
+                    with edit_col1:
+                        edited_admission = st.number_input(
+                            "Admission Grade",
+                            min_value=0.0,
+                            max_value=100.0,
+                            value=float(admission),
+                            step=1.0
+                        )
+                        edited_age = st.number_input(
+                            "Age at Enrollment",
+                            min_value=15,
+                            max_value=100,
+                            value=int(record_age),
+                            step=1
+                        )
+                        edited_enrolled = st.number_input(
+                            "Units Enrolled",
+                            min_value=0,
+                            max_value=100,
+                            value=int(enrolled),
+                            step=1
+                        )
+                        edited_approved = st.number_input(
+                            "Units Approved",
+                            min_value=0,
+                            max_value=100,
+                            value=int(approved),
+                            step=1
+                        )
+
+                    with edit_col2:
+                        edited_grade = st.number_input(
+                            "Semester Average",
+                            min_value=0.0,
+                            max_value=100.0,
+                            value=float(grade),
+                            step=1.0
+                        )
+                        edited_evaluations = st.number_input(
+                            "Evaluations",
+                            min_value=0,
+                            max_value=100,
+                            value=int(evaluations),
+                            step=1
+                        )
+                        edited_absences = st.number_input(
+                            "Number of Absences",
+                            min_value=0,
+                            max_value=100,
+                            value=int(absences),
+                            step=1
+                        )
+                        edited_attendance = max(0, 100 - edited_absences)
+                        st.metric(
+                            "Attendance Rate",
+                            f"{edited_attendance}%"
+                        )
+
+                    update_col, cancel_col = st.columns(2)
+                    with update_col:
+                        update_clicked = st.form_submit_button(
+                            "💾 Update Record",
+                            use_container_width=True,
+                            type="primary"
+                        )
+                    with cancel_col:
+                        cancel_clicked = st.form_submit_button(
+                            "Cancel",
+                            use_container_width=True
+                        )
+
+                    if update_clicked:
+                        if not edited_name.strip():
+                            st.error("Please enter the student's name.")
+                        elif edited_approved > edited_enrolled:
+                            st.error(
+                                "Approved units cannot exceed enrolled units."
+                            )
+                        else:
+                            try:
+                                updated_input = pd.DataFrame(
+                                    [[
+                                        edited_admission,
+                                        edited_age,
+                                        edited_enrolled,
+                                        edited_approved,
+                                        edited_grade,
+                                        edited_evaluations
+                                    ]],
+                                    columns=features
+                                )
+
+                                updated_prediction = model.predict(
+                                    updated_input
+                                )[0]
+                                updated_probabilities = model.predict_proba(
+                                    updated_input
+                                )[0]
+                                class_index = list(model.classes_).index(1)
+                                updated_risk = (
+                                    float(updated_probabilities[class_index])
+                                    * 100
+                                )
+                                updated_status = (
+                                    "At Risk" if updated_prediction == 1
+                                    else "Not At Risk"
+                                )
+
+                                updated_record = {
+                                    "Student Name": edited_name.strip(),
+                                    "Admission Grade": edited_admission,
+                                    "Age": edited_age,
+                                    "Units Enrolled": edited_enrolled,
+                                    "Units Approved": edited_approved,
+                                    "Semester Average": edited_grade,
+                                    "Evaluations": edited_evaluations,
+                                    "Attendance Rate": edited_attendance,
+                                    "Absences": edited_absences,
+                                    "Prediction": updated_status,
+                                    "Risk Percentage": round(
+                                        updated_risk, 2
+                                    )
+                                }
+
+                                update_record(int(rid), updated_record)
+                                st.session_state[edit_key] = False
+
+                                latest = st.session_state.get(
+                                    "latest_prediction"
+                                )
+                                if latest and latest.get("Record ID") == rid:
+                                    latest.update(updated_record)
+
+                                st.success(
+                                    f"{student_id} updated successfully!"
+                                )
+                                st.rerun()
+
+                            except Exception as error:
+                                st.error(
+                                    "Unable to update the record. "
+                                    "Check the terminal for details."
+                                )
+                                print(f"Update error: {error}")
+
+                    elif cancel_clicked:
+                        st.session_state[edit_key] = False
+                        st.rerun()
+
+            # ------------------------------------------
+            # DELETE RECORD
+            # ------------------------------------------
             st.divider()
             st.subheader("Delete Record")
-
             st.caption(
                 "Deleting a record permanently removes it from the database."
             )
@@ -849,17 +1067,14 @@ elif page == "Student Records":
             if st.button(
                 "Delete Selected Record",
                 disabled=not confirm_delete,
-                type="secondary"
+                type="secondary",
+                key=f"delete_button_{rid}"
             ):
                 delete_record(int(rid))
 
                 latest = st.session_state.get("latest_prediction")
-
                 if latest and latest.get("Record ID") == rid:
-                    st.session_state.pop(
-                        "latest_prediction",
-                        None
-                    )
+                    st.session_state.pop("latest_prediction", None)
 
                 st.success(f"{student_id} has been deleted.")
                 st.rerun()
