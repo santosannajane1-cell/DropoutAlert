@@ -90,10 +90,25 @@ def initialize_database():
                 units_approved INTEGER NOT NULL,
                 semester_grade REAL NOT NULL,
                 evaluations INTEGER NOT NULL,
+                attendance_rate REAL NOT NULL DEFAULT 100,
+                absences INTEGER NOT NULL DEFAULT 0,
                 prediction TEXT NOT NULL,
                 risk_percentage REAL NOT NULL
             )
         """)
+
+        # Add the attendance columns to existing databases, if needed.
+        existing_columns = {
+            row[1] for row in conn.execute("PRAGMA table_info(predictions)")
+        }
+        if "attendance_rate" not in existing_columns:
+            conn.execute(
+                "ALTER TABLE predictions ADD COLUMN attendance_rate REAL NOT NULL DEFAULT 100"
+            )
+        if "absences" not in existing_columns:
+            conn.execute(
+                "ALTER TABLE predictions ADD COLUMN absences INTEGER NOT NULL DEFAULT 0"
+            )
 
 
 def save_prediction(record):
@@ -108,10 +123,12 @@ def save_prediction(record):
                 units_approved,
                 semester_grade,
                 evaluations,
+                attendance_rate,
+                absences,
                 prediction,
                 risk_percentage
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             record["Date & Time"],
             record["Student Name"],
@@ -121,6 +138,8 @@ def save_prediction(record):
             record["Units Approved"],
             record["Semester Average"],
             record["Evaluations"],
+            record["Attendance Rate"],
+            record["Absences"],
             record["Prediction"],
             record["Risk Percentage"]
         ))
@@ -140,6 +159,8 @@ def load_predictions(search="", risk_filter="All Records"):
             units_approved AS 'Units Approved',
             semester_grade AS 'Semester Average',
             evaluations AS 'Evaluations',
+            attendance_rate AS 'Attendance Rate (%)',
+            absences AS 'Absences',
             prediction AS 'Prediction',
             risk_percentage AS 'Risk Percentage'
         FROM predictions
@@ -171,6 +192,8 @@ def load_record(record_id):
                 units_approved,
                 semester_grade,
                 evaluations,
+                attendance_rate,
+                absences,
                 prediction,
                 risk_percentage
             FROM predictions
@@ -540,6 +563,31 @@ elif page == "New Prediction":
 
     form_values = student_prediction_form()
 
+    st.markdown("### Attendance Information")
+    st.caption(
+        "For counselor reference only. Attendance is saved with the student record "
+        "and does not affect the machine-learning prediction."
+    )
+    attendance_col1, attendance_col2 = st.columns(2)
+    with attendance_col1:
+        attendance_rate = st.number_input(
+            "Attendance Rate (%)",
+            min_value=0.0,
+            max_value=100.0,
+            value=100.0,
+            step=1.0,
+            help="Enter the student's attendance percentage from 0 to 100."
+        )
+    with attendance_col2:
+        absences = st.number_input(
+            "Number of Absences",
+            min_value=0,
+            max_value=365,
+            value=0,
+            step=1,
+            help="Enter the total number of absences."
+        )
+
     submitted = form_values["submitted"]
     student_name = form_values["student_name"]
     admission_grade = form_values["admission_grade"]
@@ -597,6 +645,8 @@ elif page == "New Prediction":
                     "Units Approved": units_approved,
                     "Semester Average": semester_grade,
                     "Evaluations": evaluations,
+                    "Attendance Rate": attendance_rate,
+                    "Absences": int(absences),
                     "Prediction": status,
                     "Risk Percentage": round(
                         risk_percentage, 2
@@ -742,6 +792,8 @@ elif page == "Student Records":
                 approved,
                 grade,
                 evaluations,
+                attendance_rate,
+                absences,
                 status,
                 risk
             ) = selected
@@ -771,6 +823,8 @@ elif page == "Student Records":
                     st.write(f"**Units Approved:** {approved}")
                     st.write(f"**Semester Average:** {grade:g}")
                     st.write(f"**Evaluations:** {evaluations}")
+                    st.write(f"**Attendance Rate:** {attendance_rate:g}%")
+                    st.write(f"**Number of Absences:** {absences}")
 
             st.divider()
             st.subheader("Delete Record")
