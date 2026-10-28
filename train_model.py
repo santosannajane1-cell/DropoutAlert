@@ -14,10 +14,44 @@ from sklearn.metrics import (
     accuracy_score
 )
 
-# 1. Load dataset
+# =====================================
+# 1. LOAD ORIGINAL DATASET
+# =====================================
+
 df = pd.read_csv("dataset/student_dropout.csv", sep=";")
 
-# 2. Select early-warning features
+print("Original dataset loaded successfully!")
+print("Dataset shape:", df.shape)
+
+
+# =====================================
+# 2. CONVERT GRADES TO 0-100 SCALE
+# =====================================
+
+# Admission Grade: 0-200 becomes 0-100
+df["Admission grade"] = df["Admission grade"] / 2
+
+# First Semester Grade: 0-20 becomes 0-100
+df["Curricular units 1st sem (grade)"] = (
+    df["Curricular units 1st sem (grade)"] * 5
+)
+
+# Save converted dataset without changing the original
+df.to_csv(
+    "dataset/student_dropout_100.csv",
+    sep=";",
+    index=False
+)
+
+print("\nGrades converted to 0-100 scale.")
+print("Converted dataset saved to:")
+print("dataset/student_dropout_100.csv")
+
+
+# =====================================
+# 3. SELECT FEATURES
+# =====================================
+
 features = [
     "Admission grade",
     "Age at enrollment",
@@ -30,10 +64,14 @@ features = [
 X = df[features]
 
 # Dropout = 1 (At Risk)
-# Graduate and Enrolled = 0 (Not At Risk)
+# Graduate or Enrolled = 0 (Not At Risk)
 y = (df["Target"] == "Dropout").astype(int)
 
-# 3. Split dataset: 80% training, 20% testing
+
+# =====================================
+# 4. SPLIT DATASET
+# =====================================
+
 X_train, X_test, y_train, y_test = train_test_split(
     X,
     y,
@@ -42,7 +80,15 @@ X_train, X_test, y_train, y_test = train_test_split(
     stratify=y
 )
 
-# 4. Train Random Forest model
+print("\nDataset split completed.")
+print("Training samples:", len(X_train))
+print("Testing samples:", len(X_test))
+
+
+# =====================================
+# 5. TRAIN RANDOM FOREST MODEL
+# =====================================
+
 model = RandomForestClassifier(
     n_estimators=100,
     random_state=42,
@@ -51,43 +97,15 @@ model = RandomForestClassifier(
 
 model.fit(X_train, y_train)
 
-print("\nCLASS DISTRIBUTION AND SPLIT")
-print("Total records:", len(y))
-print("Training records:", len(y_train))
-print("Testing records:", len(y_test))
+print("\nModel training completed!")
 
-print("\nFull dataset:")
-print(y.value_counts().sort_index())
 
-print("\nTraining:")
-print(y_train.value_counts().sort_index())
+# =====================================
+# 6. MODEL EVALUATION
+# =====================================
 
-print("\nTesting:")
-print(y_test.value_counts().sort_index())
-
-# 5. Evaluate on unseen test data
 y_pred = model.predict(X_test)
 y_prob = model.predict_proba(X_test)[:, 1]
-
-# DISPLAY 4 ACTUAL TESTING SAMPLES
-print("\nTESTING SAMPLES")
-print("=" * 50, flush=True)
-
-samples = X_test.head(4).copy()
-actual = y_test.loc[samples.index]
-predicted = model.predict(samples)
-
-for i in range(len(samples)):
-    print(f"\nSample {i + 1}", flush=True)
-    print(samples.iloc[i].to_string(), flush=True)
-
-    expected = "At Risk" if actual.iloc[i] == 1 else "Not At Risk"
-    prediction = "At Risk" if predicted[i] == 1 else "Not At Risk"
-    correct = "Yes" if actual.iloc[i] == predicted[i] else "No"
-
-    print(f"Expected: {expected}", flush=True)
-    print(f"Predicted: {prediction}", flush=True)
-    print(f"Correct: {correct}", flush=True)
 
 accuracy = accuracy_score(y_test, y_pred)
 recall = recall_score(y_test, y_pred)
@@ -96,32 +114,28 @@ roc_auc = roc_auc_score(y_test, y_prob)
 report = classification_report(
     y_test,
     y_pred,
-    target_names=["Not At Risk", "At Risk"],
-    output_dict=True,
-    zero_division=0
+    target_names=["Not At Risk", "At Risk"]
 )
 
 matrix = confusion_matrix(y_test, y_pred)
 
-# 6. Display evaluation results
 print("\nMODEL EVALUATION")
 print("----------------------")
 print(f"Accuracy: {accuracy:.4f}")
 print(f"Recall:   {recall:.4f}")
-print(f"ROC-AUC:  {roc_auc:.4f}")
+print(f"ROC-AUC: {roc_auc:.4f}")
 
 print("\nCLASSIFICATION REPORT")
-print(classification_report(
-    y_test,
-    y_pred,
-    target_names=["Not At Risk", "At Risk"],
-    zero_division=0
-))
+print(report)
 
 print("\nCONFUSION MATRIX")
 print(matrix)
 
-# 7. Save model, features, and evaluation results
+
+# =====================================
+# 7. SAVE MODEL AND FEATURES
+# =====================================
+
 os.makedirs("model", exist_ok=True)
 os.makedirs("evaluation", exist_ok=True)
 
@@ -131,71 +145,102 @@ with open("model/dropout_model.pkl", "wb") as file:
 with open("model/features.pkl", "wb") as file:
     pickle.dump(features, file)
 
-results = {
-    "dataset_rows": int(len(df)),
-    "training_rows": int(len(X_train)),
-    "testing_rows": int(len(X_test)),
+print("\nModel saved successfully!")
+print("Location: model/dropout_model.pkl")
+
+
+# =====================================
+# 8. SAVE EVALUATION RESULTS
+# =====================================
+
+evaluation_results = {
     "accuracy": float(accuracy),
     "recall": float(recall),
     "roc_auc": float(roc_auc),
     "classification_report": report,
     "confusion_matrix": matrix.tolist(),
     "features": features,
-    "target_definition": {
-        "1": "At Risk (Dropout)",
-        "0": "Not At Risk (Graduate or Enrolled)"
+    "hyperparameters": {
+        "model": "RandomForestClassifier",
+        "n_estimators": 100,
+        "random_state": 42,
+        "class_weight": "balanced"
     }
 }
 
-with open("evaluation/evaluation_results.json", "w") as file:
-    json.dump(results, file, indent=4)
+with open(
+    "evaluation/evaluation_results.json",
+    "w"
+) as file:
+    json.dump(evaluation_results, file, indent=4)
 
-with open("evaluation/evaluation_report.txt", "w") as file:
-    file.write("DROPOUTALERT MODEL EVALUATION\n")
-    file.write("============================\n\n")
-    file.write(f"Dataset records: {len(df)}\n")
-    file.write(f"Training records: {len(X_train)}\n")
-    file.write(f"Testing records: {len(X_test)}\n\n")
+with open(
+    "evaluation/evaluation_report.txt",
+    "w"
+) as file:
+    file.write("MODEL EVALUATION\n")
+    file.write("----------------------\n")
     file.write(f"Accuracy: {accuracy:.4f}\n")
-    file.write(f"Recall: {recall:.4f}\n")
+    file.write(f"Recall:   {recall:.4f}\n")
     file.write(f"ROC-AUC: {roc_auc:.4f}\n\n")
     file.write("CLASSIFICATION REPORT\n")
-    file.write(classification_report(
-        y_test,
-        y_pred,
-        target_names=["Not At Risk", "At Risk"],
-        zero_division=0
-    ))
+    file.write(report)
     file.write("\nCONFUSION MATRIX\n")
     file.write(str(matrix))
-    file.write("\n")
 
-print("\nModel saved successfully!")
-print("Evaluation results saved in the evaluation folder.")
+print("\nEvaluation results saved!")
 
-# DUPLICATE AND LEAKAGE CHECK
 
-print("\nDUPLICATE AND LEAKAGE CHECK")
-print("---------------------------")
+# =====================================
+# 9. SHOW TEST EXAMPLES
+# =====================================
 
-# 1. Check duplicate records in the full dataset
-duplicates = df.duplicated().sum()
-print("Duplicate records:", duplicates)
+print("\nSAMPLE TEST PREDICTIONS")
+print("----------------------")
 
-# 2. Check whether the target column is used as an input feature
-print("Target included in features:", "Target" in features)
+test_samples = X_test.head(5)
 
-# 3. Check for identical feature rows across training and testing
-overlap = X_train.merge(X_test, how="inner").shape[0]
-print("Matching feature rows across train/test:", overlap)
+sample_predictions = model.predict(test_samples)
+sample_probabilities = model.predict_proba(test_samples)[:, 1]
 
-# Check exact full-record overlap between train and test
-train_rows = df.loc[X_train.index]
-test_rows = df.loc[X_test.index]
+for i in range(len(test_samples)):
+    prediction = (
+        "At Risk"
+        if sample_predictions[i] == 1
+        else "Not At Risk"
+    )
 
-full_record_overlap = train_rows.merge(
-    test_rows,
-    how="inner"
-).shape[0]
+    risk_percentage = sample_probabilities[i] * 100
 
-print("Matching full records across train/test:", full_record_overlap)
+    print(f"\nStudent {i + 1}")
+    print("Prediction:", prediction)
+    print(f"Risk Percentage: {risk_percentage:.2f}%")
+
+
+# =====================================
+# 10. DATASET CHECKS
+# =====================================
+
+print("\nDATASET CHECKS")
+print("----------------------")
+
+print("Duplicate records:", df.duplicated().sum())
+
+print(
+    "Target included in features:",
+    "Target" in features
+)
+
+print(
+    "Matching feature rows between train and test:",
+    X_train.index.isin(X_test.index).sum()
+)
+
+print(
+    "Matching full records between train and test:",
+    df.loc[X_train.index].isin(
+        df.loc[X_test.index]
+    ).all(axis=1).sum()
+)
+
+print("\nALL DONE! MODEL TRAINING COMPLETED!")
