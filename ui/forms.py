@@ -30,7 +30,7 @@ def student_prediction_form():
                 value=None,
                 step=0.1,
                 format="%.1f",
-                placeholder="0-100"
+                placeholder="95–190"
             )
 
             age = st.number_input(
@@ -66,22 +66,22 @@ def student_prediction_form():
 
             semester_grade = st.number_input(
                 "First Semester Average Grade",
-                min_value=0,
+                min_value=0.0,
                 max_value=100,
                 value=None,
                 step=0.01,
                 format="%.2f",
-                placeholder="0–100"
+                placeholder="0–18.88"
             )
 
             evaluations = st.number_input(
                 "First Semester Evaluations",
                 min_value=0,
-                max_value=50,
+                max_value=45,
                 value=None,
                 step=1,
                 format="%d",
-                placeholder="0–50"
+                placeholder="0–45"
             )
 
         st.divider()
