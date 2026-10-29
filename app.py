@@ -682,11 +682,50 @@ elif page == "New Prediction":
                     float(probabilities[class_index]) * 100
                 )
 
-                status = (
+                
+                # ------------------------------------------
+                # MACHINE LEARNING PREDICTION
+                # ------------------------------------------
+
+                prediction = model.predict(input_data)[0]
+
+                probabilities = model.predict_proba(input_data)[0]
+
+                class_index = list(model.classes_).index(1)
+
+                risk_percentage = (
+                    float(probabilities[class_index]) * 100
+                )
+
+                # Original Machine Learning prediction
+                ml_status = (
                     "At Risk"
                     if prediction == 1
                     else "Not At Risk"
                 )
+
+                # ------------------------------------------
+                # SENSITIVE RISK ASSESSMENT
+                # ------------------------------------------
+
+                # Rule 1: Grade below 70 is a warning sign
+                low_grade = semester_grade < 70
+
+                # Rule 2: 20 or more absences is a warning sign
+                excessive_absences = absences >= 20
+
+                # Rule 3: Combine the ML prediction with
+                # academic warning indicators
+                if (
+                    ml_status == "At Risk"
+                    or low_grade
+                    or excessive_absences
+                ):
+                    status = "At Risk"
+
+                else:
+                    status = "Not At Risk"
+
 
                 # ------------------------------------------
                 # SAVE STUDENT RECORD
