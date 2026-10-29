@@ -31,11 +31,21 @@ CRIMSON = "#C1121F"
 apply_styles()
 
 
+
 # =====================================================
-# STUDENT ID HELPER
+# UNIQUE STUDENT ID GENERATOR
 # =====================================================
 
 def format_student_id(record_id, prediction_date=None):
+    """
+    Generate a unique Student ID using the database record ID.
+
+    Example:
+        Record ID 1   -> DA-2026-000001
+        Record ID 2   -> DA-2026-000002
+        Record ID 100 -> DA-2026-000100
+    """
+
     year = datetime.now().year
 
     if prediction_date:
@@ -47,7 +57,7 @@ def format_student_id(record_id, prediction_date=None):
         except (ValueError, TypeError):
             pass
 
-    return f"DA-{year}-{int(record_id):03d}"
+    return f"DA-{year}-{int(record_id):06d}"
 
 
 # =====================================================
@@ -113,8 +123,30 @@ def initialize_database():
             )
 
 
+# =====================================================
+# SAVE PREDICTION - PREVENT DUPLICATE STUDENT NAMES
+# =====================================================
+
 def save_prediction(record):
+
     with get_connection() as conn:
+
+        # Check if the student name already exists
+        existing_student = conn.execute("""
+            SELECT id
+            FROM predictions
+            WHERE LOWER(TRIM(student_name)) = LOWER(TRIM(?))
+            LIMIT 1
+        """, (
+            record["Student Name"],
+        )).fetchone()
+
+        # Prevent duplicate student names
+        if existing_student:
+
+            return None
+
+        # Save the new student prediction
         cursor = conn.execute("""
             INSERT INTO predictions (
                 prediction_date,
@@ -133,7 +165,7 @@ def save_prediction(record):
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             record["Date & Time"],
-            record["Student Name"],
+            record["Student Name"].strip(),
             record["Admission Grade"],
             record["Age"],
             record["Units Enrolled"],
@@ -147,6 +179,7 @@ def save_prediction(record):
         ))
 
         return cursor.lastrowid
+
 
 
 def load_predictions(search="", risk_filter="All Records"):
@@ -689,21 +722,37 @@ elif page == "New Prediction":
                     )
                 }
 
+                
+                # ------------------------------------------
+                # SAVE STUDENT RECORD
+                # ------------------------------------------
+
                 record_id = save_prediction(record)
 
-                record["Record ID"] = record_id
+                # Check if the student already exists
+                if record_id is None:
 
-                record["Student ID"] = format_student_id(
-                    record_id,
-                    record["Date & Time"]
-                )
+                    st.warning(
+                        f"Student '{student_name.strip()}' already exists "
+                        "in the database. Duplicate student names are not allowed."
+                    )
 
-                st.session_state["latest_prediction"] = record
+                else:
 
-                st.success(
-                    f"Prediction saved successfully. "
-                    f"Student ID: {record['Student ID']}"
-                )
+                    record["Record ID"] = record_id
+
+                    record["Student ID"] = format_student_id(
+                        record_id,
+                        record["Date & Time"]
+                    )
+
+                    st.session_state["latest_prediction"] = record
+
+                    st.success(
+                        f"Prediction saved successfully. "
+                        f"Student ID: {record['Student ID']}"
+                    )
+
 
             except (ValueError, KeyError):
 
