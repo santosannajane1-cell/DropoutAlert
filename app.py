@@ -699,11 +699,10 @@ elif page == "New Prediction":
             try:
 
                 # ------------------------------------------
-                # MACHINE LEARNING PREDICTION
+                # MACHINE LEARNING RISK PREDICTION
                 # ------------------------------------------
 
-                prediction = model.predict(input_data)[0]
-
+                # Get the probability for class 1 (At Risk)
                 probabilities = model.predict_proba(input_data)[0]
 
                 class_index = list(model.classes_).index(1)
@@ -712,17 +711,17 @@ elif page == "New Prediction":
                     float(probabilities[class_index]) * 100
                 )
 
+                # Use 50% as the ML risk cutoff
+                ml_status = (
+                    "At Risk"
+                    if risk_percentage >= 50
+                    else "Not At Risk"
+                )
+
                 # ------------------------------------------
                 # PHILIPPINE GRADING SYSTEM
                 # RISK ASSESSMENT RULES
                 # ------------------------------------------
-
-                # Original Machine Learning prediction
-                ml_status = (
-                    "At Risk"
-                    if prediction == 1
-                    else "Not At Risk"
-                )
 
                 # Academic warning indicators
                 low_semester_grade = semester_grade <= 70
