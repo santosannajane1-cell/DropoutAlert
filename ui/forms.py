@@ -52,7 +52,7 @@ def student_prediction_form():
         )
 
         units_approved = st.number_input(
-                   "First Semester Units Passed",
+                   "First Semester Units Enrolled",
                    min_value=0,
                    max_value=26,
                    value=None,
@@ -64,7 +64,7 @@ def student_prediction_form():
     with col2:
 
         units_enrolled = st.number_input(
-                    "First Semester Units Enrolled",
+                    "First Semester Units Passed",
                     min_value=0,
                     max_value=26,
                     value=None,
