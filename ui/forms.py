@@ -51,27 +51,27 @@ def student_prediction_form():
             placeholder="Enter age"
         )
 
-        units_enrolled = st.number_input(
-            "First Semester Units Enrolled",
-            min_value=0,
-            max_value=26,
-            value=None,
-            step=1,
-            format="%d",
-            placeholder="0–26"
-        )
+        units_approved = st.number_input(
+                   "First Semester Units Passed",
+                   min_value=0,
+                   max_value=26,
+                   value=None,
+                   step=1,
+                   format="%d",
+                   placeholder="0–26"
+               )
 
     with col2:
 
-        units_approved = st.number_input(
-            "First Semester Units Passed",
-            min_value=0,
-            max_value=26,
-            value=None,
-            step=1,
-            format="%d",
-            placeholder="0–26"
-        )
+        units_enrolled = st.number_input(
+                    "First Semester Units Enrolled",
+                    min_value=0,
+                    max_value=26,
+                    value=None,
+                    step=1,
+                    format="%d",
+                    placeholder="0–26"
+                )
 
         semester_grade = st.number_input(
             "First Semester Average Grade (0–100)",
