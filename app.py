@@ -608,20 +608,44 @@ elif page == "New Prediction":
 
     form_values = student_prediction_form()
 
-    # Retrieve submitted values
-
     submitted = form_values["submitted"]
 
     student_name = form_values["student_name"]
     admission_grade = form_values["admission_grade"]
     age = form_values["age"]
+
     units_enrolled = form_values["units_enrolled"]
     units_approved = form_values["units_approved"]
+
     semester_grade = form_values["semester_grade"]
     evaluations = form_values["evaluations"]
 
     attendance_rate = form_values["attendance_rate"]
     absences = form_values["absences"]
+
+    # --------------------------------------------------
+    # CALCULATE UNITS NOT APPROVED
+    # --------------------------------------------------
+
+    if (
+        units_enrolled is not None
+        and units_approved is not None
+    ):
+        units_not_approved = (
+            units_enrolled - units_approved
+        )
+    else:
+        units_not_approved = 0
+
+    # Display the calculated value
+    if (
+        units_enrolled is not None
+        and units_approved is not None
+    ):
+        st.info(
+            f"📘 **Units Not Approved:** "
+            f"{units_not_approved}"
+        )
 
     # --------------------------------------------------
     # GENERATE PREDICTION
@@ -640,6 +664,8 @@ elif page == "New Prediction":
             or units_approved is None
             or semester_grade is None
             or evaluations is None
+            or attendance_rate is None
+            or absences is None
         ):
 
             st.error(
@@ -653,6 +679,10 @@ elif page == "New Prediction":
             )
 
         else:
+
+            # ------------------------------------------
+            # PREPARE MODEL INPUT
+            # ------------------------------------------
 
             input_data = pd.DataFrame(
                 [[
@@ -682,20 +712,10 @@ elif page == "New Prediction":
                     float(probabilities[class_index]) * 100
                 )
 
-                
                 # ------------------------------------------
-                # MACHINE LEARNING PREDICTION
+                # PHILIPPINE GRADING SYSTEM
+                # RISK ASSESSMENT RULES
                 # ------------------------------------------
-
-                prediction = model.predict(input_data)[0]
-
-                probabilities = model.predict_proba(input_data)[0]
-
-                class_index = list(model.classes_).index(1)
-
-                risk_percentage = (
-                    float(probabilities[class_index]) * 100
-                )
 
                 # Original Machine Learning prediction
                 ml_status = (
@@ -704,31 +724,32 @@ elif page == "New Prediction":
                     else "Not At Risk"
                 )
 
-                # ------------------------------------------
-                # SENSITIVE RISK ASSESSMENT
-                # ------------------------------------------
+                # Academic warning indicators
+                low_semester_grade = semester_grade <= 70
 
-                # Rule 1: Grade below 70 is a warning sign
-                low_grade = semester_grade < 70
+                low_admission_grade = admission_grade <= 70
 
-                # Rule 2: 20 or more absences is a warning sign
                 excessive_absences = absences >= 20
 
-                # Rule 3: Combine the ML prediction with
-                # academic warning indicators
+                # ------------------------------------------
+                # FINAL RISK CLASSIFICATION
+                # ------------------------------------------
+
                 if (
                     ml_status == "At Risk"
-                    or low_grade
+                    or low_semester_grade
+                    or low_admission_grade
                     or excessive_absences
                 ):
+
                     status = "At Risk"
 
                 else:
+
                     status = "Not At Risk"
 
-
                 # ------------------------------------------
-                # SAVE STUDENT RECORD
+                # PREPARE STUDENT RECORD
                 # ------------------------------------------
 
                 record = {
@@ -761,7 +782,6 @@ elif page == "New Prediction":
                     )
                 }
 
-                
                 # ------------------------------------------
                 # SAVE STUDENT RECORD
                 # ------------------------------------------
@@ -772,8 +792,9 @@ elif page == "New Prediction":
                 if record_id is None:
 
                     st.warning(
-                        f"Student '{student_name.strip()}' already exists "
-                        "in the database. Duplicate student names are not allowed."
+                        f"Student '{student_name.strip()}' already "
+                        "exists in the database. Duplicate student "
+                        "names are not allowed."
                     )
 
                 else:
@@ -788,10 +809,9 @@ elif page == "New Prediction":
                     st.session_state["latest_prediction"] = record
 
                     st.success(
-                        f"Prediction saved successfully. "
+                        "Prediction saved successfully. "
                         f"Student ID: {record['Student ID']}"
                     )
-
 
             except (ValueError, KeyError):
 
